@@ -1,13 +1,28 @@
-import java.io.File;
-import java.util.Arrays;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Main {
     public static void main(String[] args) throws Exception {
         BooleanSearchEngine engine = new BooleanSearchEngine(new File("pdfs"));
-        System.out.println(engine.search("бизнес"));
-
-        // здесь создайте сервер, который отвечал бы на нужные запросы
-        // слушать он должен порт 8989
-        // отвечать на запросы /{word} -> возвращённое значение метода search(word) в JSON-формате
+        String word;
+        try (ServerSocket serverSocket = new ServerSocket(8989);) {
+            while (true) {
+                System.out.println("Starting server at " + "8989" + "...");
+                try (
+                        Socket socket = serverSocket.accept();
+                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                ) {
+                    System.out.println("New connection accepted");
+                    word = in.readLine();
+                    out.println(engine.search(word));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("server cannot start");
+            e.printStackTrace();
+        }
     }
 }
